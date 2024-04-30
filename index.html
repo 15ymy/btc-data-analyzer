@@ -46,46 +46,72 @@
             const originalDataInput = document.getElementById('original-data').value;
             const latestDataInput = document.getElementById('latest-data').value;
 
-            const originalData = processData(originalDataInput);
-            const latestData = processData(latestDataInput);
+            const originalContractData = processData(originalDataInput, true);
+            const latestContractData = processData(latestDataInput, true);
+            const originalSpotData = processData(originalDataInput, false);
+            const latestSpotData = processData(latestDataInput, false);
 
-            const labels = originalData.labels;
-            const institutionalData = latestData.institutionalData.map((latest, i) => latest - originalData.institutionalData[i]);
-            const retailData = latestData.retailData.map((latest, i) => latest - originalData.retailData[i]);
+            const labels = originalContractData.labels;
+            const institutionalContractData = latestContractData.institutionalData.map((latest, i) => latest - originalContractData.institutionalData[i]);
+            const retailContractData = latestContractData.retailData.map((latest, i) => latest - originalContractData.retailData[i]);
+            const institutionalSpotData = latestSpotData.institutionalData.map((latest, i) => latest - originalSpotData.institutionalData[i]);
+            const retailSpotData = latestSpotData.retailData.map((latest, i) => latest - originalSpotData.retailData[i]);
 
             const tbody = document.querySelector('#dataTable tbody');
             tbody.innerHTML = '';
 
-            const priceDiff = latestData.price - originalData.price;
-            const priceRow = document.createElement('tr');
-            priceRow.innerHTML = `<td colspan="3">BTC价格: ${latestData.price.toFixed(2)}U (${formatNumber(priceDiff)}U)</td>`;
-            tbody.appendChild(priceRow);
+            const contractPriceDiff = latestContractData.price - originalContractData.price;
+            const contractPriceRow = document.createElement('tr');
+            contractPriceRow.innerHTML = `<td colspan="3">BTC合约价格: ${latestContractData.price.toFixed(2)}U (${formatNumber(contractPriceDiff)}U)</td>`;
+            tbody.appendChild(contractPriceRow);
 
-            const headerRow = document.createElement('tr');
-            headerRow.innerHTML = '<td>时段   机构资金差   散户资金差</td>';
-            tbody.appendChild(headerRow);
+            const contractHeaderRow = document.createElement('tr');
+            contractHeaderRow.innerHTML = '<td>时段   机构资金差   散户资金差</td>';
+            tbody.appendChild(contractHeaderRow);
 
             for (let i = 0; i < labels.length; i++) {
                 const row = document.createElement('tr');
-                const institutional = formatNumber(institutionalData[i]);
-                const retail = formatNumber(retailData[i]);
+                const institutional = formatNumber(institutionalContractData[i]);
+                const retail = formatNumber(retailContractData[i]);
+                row.innerHTML = `<td>${labels[i].padEnd(6)} ${institutional.padStart(10)} ${retail.padStart(10)}</td>`;
+                tbody.appendChild(row);
+            }
+
+            const spotPriceDiff = latestSpotData.price - originalSpotData.price;
+            const spotPriceRow = document.createElement('tr');
+            spotPriceRow.innerHTML = `<td colspan="3">BTC现货价格: ${latestSpotData.price.toFixed(2)}U (${formatNumber(spotPriceDiff)}U)</td>`;
+            tbody.appendChild(spotPriceRow);
+
+            const spotHeaderRow = document.createElement('tr');
+            spotHeaderRow.innerHTML = '<td>时段   机构资金差   散户资金差</td>';
+            tbody.appendChild(spotHeaderRow);
+
+            for (let i = 0; i < labels.length; i++) {
+                const row = document.createElement('tr');
+                const institutional = formatNumber(institutionalSpotData[i]);
+                const retail = formatNumber(retailSpotData[i]);
                 row.innerHTML = `<td>${labels[i].padEnd(6)} ${institutional.padStart(10)} ${retail.padStart(10)}</td>`;
                 tbody.appendChild(row);
             }
         }
 
-        function processData(dataInput) {
+        function processData(dataInput, isContract) {
             const dataLines = dataInput.split('\n');
             const labels = [];
             const institutionalData = [];
             const retailData = [];
             let price = null;
+            let isTargetData = false;
 
             for (let i = 0; i < dataLines.length; i++) {
                 const line = dataLines[i].trim();
-                if (line.includes('最近交易价格')) {
+                if (line.includes('合约') && isContract) {
+                    isTargetData = true;
+                } else if (line.includes('现货') && !isContract) {
+                    isTargetData = true;
+                } else if (line.includes('最近交易价格')) {
                     price = parseFloat(line.match(/\((\d+(\.\d+)?)/)[1]);
-                } else if (line.includes('period')) {
+                } else if (line.includes('period') && isTargetData) {
                     const dataPoints = dataLines.slice(i + 1);
                     for (const point of dataPoints) {
                         const [period, institutional, retail] = point.trim().split(/\s+/);
