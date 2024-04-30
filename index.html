@@ -4,28 +4,15 @@
     <title>BTC Data Analyzer</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         textarea {
             width: 100%;
             margin-bottom: 10px;
         }
-        table {
-            border-collapse: collapse;
-            width: 100%;
+        canvas {
             max-width: 800px;
             margin: auto;
-            font-family: monospace;
-            white-space: pre;
-        }
-        th, td {
-            padding: 4px;
-            text-align: left;
-        }
-        .positive {
-            color: green;
-        }
-        .negative {
-            color: red;
         }
     </style>
 </head>
@@ -37,9 +24,9 @@
     <br>
     <button onclick="analyzeData()">Analyze Data</button>
     <br><br>
-    <table id="dataTable">
-        <tbody></tbody>
-    </table>
+    <canvas id="contractChart"></canvas>
+    <br>
+    <canvas id="spotChart"></canvas>
 
     <script>
         function analyzeData() {
@@ -57,42 +44,11 @@
             const institutionalSpotData = latestSpotData.institutionalData.map((latest, i) => latest - originalSpotData.institutionalData[i]);
             const retailSpotData = latestSpotData.retailData.map((latest, i) => latest - originalSpotData.retailData[i]);
 
-            const tbody = document.querySelector('#dataTable tbody');
-            tbody.innerHTML = '';
-
             const contractPriceDiff = latestContractData.price - originalContractData.price;
-            const contractPriceRow = document.createElement('tr');
-            contractPriceRow.innerHTML = `<td colspan="3">BTC合约价格: ${latestContractData.price.toFixed(2)}U (${formatNumber(contractPriceDiff)}U)</td>`;
-            tbody.appendChild(contractPriceRow);
-
-            const contractHeaderRow = document.createElement('tr');
-            contractHeaderRow.innerHTML = '<td>时段   机构资金差   散户资金差</td>';
-            tbody.appendChild(contractHeaderRow);
-
-            for (let i = 0; i < labels.length; i++) {
-                const row = document.createElement('tr');
-                const institutional = formatNumber(institutionalContractData[i]);
-                const retail = formatNumber(retailContractData[i]);
-                row.innerHTML = `<td>${labels[i].padEnd(6)} ${institutional.padStart(10)} ${retail.padStart(10)}</td>`;
-                tbody.appendChild(row);
-            }
-
             const spotPriceDiff = latestSpotData.price - originalSpotData.price;
-            const spotPriceRow = document.createElement('tr');
-            spotPriceRow.innerHTML = `<td colspan="3">BTC现货价格: ${latestSpotData.price.toFixed(2)}U (${formatNumber(spotPriceDiff)}U)</td>`;
-            tbody.appendChild(spotPriceRow);
 
-            const spotHeaderRow = document.createElement('tr');
-            spotHeaderRow.innerHTML = '<td>时段   机构资金差   散户资金差</td>';
-            tbody.appendChild(spotHeaderRow);
-
-            for (let i = 0; i < labels.length; i++) {
-                const row = document.createElement('tr');
-                const institutional = formatNumber(institutionalSpotData[i]);
-                const retail = formatNumber(retailSpotData[i]);
-                row.innerHTML = `<td>${labels[i].padEnd(6)} ${institutional.padStart(10)} ${retail.padStart(10)}</td>`;
-                tbody.appendChild(row);
-            }
+            createChart('contractChart', '合约', latestContractData.price, contractPriceDiff, labels, institutionalContractData, retailContractData);
+            createChart('spotChart', '现货', latestSpotData.price, spotPriceDiff, labels, institutionalSpotData, retailSpotData);
         }
 
         function processData(dataInput, isContract) {
@@ -140,6 +96,48 @@
             } else {
                 return sign + absNumber.toFixed(2);
             }
+        }
+
+        function createChart(chartId, type, price, priceDiff, labels, institutionalData, retailData) {
+            new Chart(document.getElementById(chartId), {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: '机构资金差',
+                            data: institutionalData,
+                            backgroundColor: institutionalData.map(value => value >= 0 ? 'rgba(75, 192, 192, 0.6)' : 'rgba(255, 99, 132, 0.6)'),
+                            borderColor: institutionalData.map(value => value >= 0 ? 'rgba(75, 192, 192, 1)' : 'rgba(255, 99, 132, 1)'),
+                            borderWidth: 1
+                        },
+                        {
+                            label: '散户资金差',
+                            data: retailData,
+                            backgroundColor: retailData.map(value => value >= 0 ? 'rgba(75, 192, 192, 0.6)' : 'rgba(255, 99, 132, 0.6)'),
+                            borderColor: retailData.map(value => value >= 0 ? 'rgba(75, 192, 192, 1)' : 'rgba(255, 99, 132, 1)'),
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            ticks: {
+                                callback: function(value, index, values) {
+                                    return formatNumber(value);
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: `BTC${type}价格: ${price.toFixed(2)}U (${formatNumber(priceDiff)}U)`
+                        }
+                    }
+                }
+            });
         }
     </script>
 </body>
