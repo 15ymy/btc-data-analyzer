@@ -14,14 +14,12 @@
             width: 100%;
             max-width: 800px;
             margin: auto;
+            font-family: monospace;
+            white-space: pre;
         }
         th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
+            padding: 4px;
             text-align: left;
-        }
-        th {
-            background-color: #f2f2f2;
         }
         .positive {
             color: green;
@@ -40,13 +38,6 @@
     <button onclick="analyzeData()">Analyze Data</button>
     <br><br>
     <table id="dataTable">
-        <thead>
-            <tr>
-                <th>时段</th>
-                <th>机构资金差</th>
-                <th>散户资金差</th>
-            </tr>
-        </thead>
         <tbody></tbody>
     </table>
 
@@ -70,23 +61,15 @@
             priceRow.innerHTML = `<td colspan="3">BTC价格: ${latestData.price}U (${formatNumber(priceDiff)}U)</td>`;
             tbody.appendChild(priceRow);
 
+            const headerRow = document.createElement('tr');
+            headerRow.innerHTML = '<td>时段   机构资金差   散户资金差</td>';
+            tbody.appendChild(headerRow);
+
             for (let i = 0; i < labels.length; i++) {
                 const row = document.createElement('tr');
-
-                const periodCell = document.createElement('td');
-                periodCell.textContent = labels[i];
-                row.appendChild(periodCell);
-
-                const institutionalCell = document.createElement('td');
-                institutionalCell.textContent = formatNumber(institutionalData[i]);
-                institutionalCell.classList.add(institutionalData[i] >= 0 ? 'positive' : 'negative');
-                row.appendChild(institutionalCell);
-
-                const retailCell = document.createElement('td');
-                retailCell.textContent = formatNumber(retailData[i]);
-                retailCell.classList.add(retailData[i] >= 0 ? 'positive' : 'negative');
-                row.appendChild(retailCell);
-
+                const institutional = formatNumber(institutionalData[i]);
+                const retail = formatNumber(retailData[i]);
+                row.innerHTML = `<td>${labels[i]}: ${institutional.padStart(10)} ${retail.padStart(10)}</td>`;
                 tbody.appendChild(row);
             }
         }
