@@ -4,15 +4,30 @@
     <title>BTC Data Analyzer</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         textarea {
             width: 100%;
             margin-bottom: 10px;
         }
-        #myChart {
+        table {
+            border-collapse: collapse;
+            width: 100%;
             max-width: 800px;
             margin: auto;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .positive {
+            color: green;
+        }
+        .negative {
+            color: red;
         }
     </style>
 </head>
@@ -24,7 +39,16 @@
     <br>
     <button onclick="analyzeData()">Analyze Data</button>
     <br><br>
-    <canvas id="myChart"></canvas>
+    <table id="dataTable">
+        <thead>
+            <tr>
+                <th>时段</th>
+                <th>机构资金差</th>
+                <th>散户资金差</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
 
     <script>
         function analyzeData() {
@@ -38,31 +62,28 @@
             const institutionalData = latestData.institutionalData.map((latest, i) => latest - originalData.institutionalData[i]);
             const retailData = latestData.retailData.map((latest, i) => latest - originalData.retailData[i]);
 
-            new Chart(document.getElementById('myChart'), {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            label: '机构资金差额',
-                            data: institutionalData,
-                            backgroundColor: 'rgba(75, 192, 192, 0.6)',
-                        },
-                        {
-                            label: '散户资金差额',
-                            data: retailData,
-                            backgroundColor: 'rgba(255, 99, 132, 0.6)',
-                        },
-                    ],
-                },
-                options: {
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                        },
-                    },
-                },
-            });
+            const tbody = document.querySelector('#dataTable tbody');
+            tbody.innerHTML = '';
+
+            for (let i = 0; i < labels.length; i++) {
+                const row = document.createElement('tr');
+
+                const periodCell = document.createElement('td');
+                periodCell.textContent = labels[i];
+                row.appendChild(periodCell);
+
+                const institutionalCell = document.createElement('td');
+                institutionalCell.textContent = formatNumber(institutionalData[i]);
+                institutionalCell.classList.add(institutionalData[i] >= 0 ? 'positive' : 'negative');
+                row.appendChild(institutionalCell);
+
+                const retailCell = document.createElement('td');
+                retailCell.textContent = formatNumber(retailData[i]);
+                retailCell.classList.add(retailData[i] >= 0 ? 'positive' : 'negative');
+                row.appendChild(retailCell);
+
+                tbody.appendChild(row);
+            }
         }
 
         function processData(dataInput) {
@@ -86,6 +107,20 @@
             }
 
             return { labels, institutionalData, retailData };
+        }
+
+        function formatNumber(number) {
+            const absNumber = Math.abs(number);
+            const sign = number >= 0 ? '+' : '-';
+            if (absNumber >= 1e9) {
+                return sign + (absNumber / 1e9).toFixed(2) + 'b';
+            } else if (absNumber >= 1e6) {
+                return sign + (absNumber / 1e6).toFixed(2) + 'm';
+            } else if (absNumber >= 1e3) {
+                return sign + (absNumber / 1e3).toFixed(2) + 'k';
+            } else {
+                return sign + absNumber.toFixed(2);
+            }
         }
     </script>
 </body>
