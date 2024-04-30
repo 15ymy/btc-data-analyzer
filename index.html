@@ -46,16 +46,16 @@
             const originalDataInput = document.getElementById('original-data').value;
             const latestDataInput = document.getElementById('latest-data').value;
 
-            const originalContractData = processData(originalDataInput, true);
-            const latestContractData = processData(latestDataInput, true);
-            const originalSpotData = processData(originalDataInput, false);
-            const latestSpotData = processData(latestDataInput, false);
+            const originalContractData = processData(originalDataInput, '合约');
+            const latestContractData = processData(latestDataInput, '合约');
+            const originalSpotData = processData(originalDataInput, '现货');
+            const latestSpotData = processData(latestDataInput, '现货');
 
             const labels = originalContractData.labels;
-            const institutionalContractData = latestContractData.institutionalData.map((latest, i) => latest - originalContractData.institutionalData[i]);
-            const retailContractData = latestContractData.retailData.map((latest, i) => latest - originalContractData.retailData[i]);
-            const institutionalSpotData = latestSpotData.institutionalData.map((latest, i) => latest - originalSpotData.institutionalData[i]);
-            const retailSpotData = latestSpotData.retailData.map((latest, i) => latest - originalSpotData.retailData[i]);
+            const institutionalContractData = calculateDifference(latestContractData.institutionalData, originalContractData.institutionalData);
+            const retailContractData = calculateDifference(latestContractData.retailData, originalContractData.retailData);
+            const institutionalSpotData = calculateDifference(latestSpotData.institutionalData, originalSpotData.institutionalData);
+            const retailSpotData = calculateDifference(latestSpotData.retailData, originalSpotData.retailData);
 
             const tbody = document.querySelector('#dataTable tbody');
             tbody.innerHTML = '';
@@ -95,7 +95,7 @@
             }
         }
 
-        function processData(dataInput, isContract) {
+        function processData(dataInput, type) {
             const dataLines = dataInput.split('\n');
             const labels = [];
             const institutionalData = [];
@@ -105,9 +105,7 @@
 
             for (let i = 0; i < dataLines.length; i++) {
                 const line = dataLines[i].trim();
-                if (line.includes('合约') && isContract) {
-                    isTargetData = true;
-                } else if (line.includes('现货') && !isContract) {
+                if (line.includes(type)) {
                     isTargetData = true;
                 } else if (line.includes('最近交易价格')) {
                     price = parseFloat(line.match(/\((\d+(\.\d+)?)/)[1]);
@@ -128,7 +126,20 @@
             return { labels, institutionalData, retailData, price };
         }
 
+        function calculateDifference(latestData, originalData) {
+            return latestData.map((value, index) => {
+                if (index < originalData.length) {
+                    return value - originalData[index];
+                } else {
+                    return value;
+                }
+            });
+        }
+
         function formatNumber(number) {
+            if (isNaN(number)) {
+                return '-';
+            }
             const absNumber = Math.abs(number);
             const sign = number >= 0 ? '+' : '-';
             if (absNumber >= 1e9) {
