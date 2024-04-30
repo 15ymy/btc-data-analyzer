@@ -5,6 +5,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    #data-input {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    #myChart {
+        max-width: 800px;
+        margin: auto;
+    }
+</style>
 </head>
 <body>
     <h1>BTC Data Analyzer</h1>
@@ -15,9 +25,54 @@
     <canvas id="myChart"></canvas>
 
     <script>
-        function analyzeData() {
-            // 在这里添加JavaScript代码来处理和显示数据
+    function analyzeData() {
+        const dataInput = document.getElementById('data-input').value;
+        const dataLines = dataInput.split('\n');
+
+        const labels = [];
+        const institutionalData = [];
+        const retailData = [];
+
+        for (let i = 0; i < dataLines.length; i++) {
+            const line = dataLines[i].trim();
+            if (line.startsWith('period')) {
+                const dataPoints = dataLines.slice(i + 1);
+                for (const point of dataPoints) {
+                    const [period, institutional, retail] = point.split(/\s+/);
+                    labels.push(period);
+                    institutionalData.push(parseFloat(institutional));
+                    retailData.push(parseFloat(retail));
+                }
+                break;
+            }
         }
+
+        new Chart(document.getElementById('myChart'), {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: '机构',
+                        data: institutionalData,
+                        backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                    },
+                    {
+                        label: '散户',
+                        data: retailData,
+                        backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                    },
+                ],
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                    },
+                },
+            },
+        });
+    }
     </script>
 </body>
 </html>
