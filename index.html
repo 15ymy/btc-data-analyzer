@@ -58,7 +58,7 @@
 
             const priceDiff = latestData.price - originalData.price;
             const priceRow = document.createElement('tr');
-            priceRow.innerHTML = `<td colspan="3">BTC价格: ${latestData.price}U (${formatNumber(priceDiff)}U)</td>`;
+            priceRow.innerHTML = `<td colspan="3">BTC价格: ${latestData.price.toFixed(2)}U (${formatNumber(priceDiff)}U)</td>`;
             tbody.appendChild(priceRow);
 
             const headerRow = document.createElement('tr');
@@ -69,7 +69,7 @@
                 const row = document.createElement('tr');
                 const institutional = formatNumber(institutionalData[i]);
                 const retail = formatNumber(retailData[i]);
-                row.innerHTML = `<td>${labels[i]}: ${institutional.padStart(10)} ${retail.padStart(10)}</td>`;
+                row.innerHTML = `<td>${labels[i].padEnd(6)} ${institutional.padStart(10)} ${retail.padStart(10)}</td>`;
                 tbody.appendChild(row);
             }
         }
@@ -85,13 +85,15 @@
                 const line = dataLines[i].trim();
                 if (line.includes('最近交易价格')) {
                     price = parseFloat(line.match(/\((\d+(\.\d+)?)/)[1]);
-                } else if (line.startsWith('period')) {
+                } else if (line.includes('period')) {
                     const dataPoints = dataLines.slice(i + 1);
                     for (const point of dataPoints) {
-                        const [period, institutional, retail] = point.split(/\s+/);
-                        labels.push(period);
-                        institutionalData.push(parseFloat(institutional));
-                        retailData.push(parseFloat(retail));
+                        const [period, institutional, retail] = point.trim().split(/\s+/);
+                        if (period && institutional && retail) {
+                            labels.push(period);
+                            institutionalData.push(parseFloat(institutional));
+                            retailData.push(parseFloat(retail));
+                        }
                     }
                     break;
                 }
