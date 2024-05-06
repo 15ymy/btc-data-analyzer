@@ -40,9 +40,13 @@
               }
 
               if (!periodData[period]) {
-                periodData[period] = 0;
+                periodData[period] = [0, 0];
               }
-              periodData[period] += value;
+              if (valueStr.startsWith('-')) {
+                periodData[period][1] += value;
+              } else {
+                periodData[period][0] += value;
+              }
             }
           }
         }
@@ -51,7 +55,7 @@
           if (!values[period]) {
             values[period] = 0;
           }
-          values[period] += periodData[period];
+          values[period] += periodData[period][0] - periodData[period][1];
         }
       }
 
