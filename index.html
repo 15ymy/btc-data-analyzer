@@ -8,7 +8,21 @@
 <h2>BTCUSDT Data Calculator</h2>
 <form id="dataForm">
     <h3>Enter Data for Calculation</h3>
-    <textarea id="inputData" rows="20" cols="50">Paste your data here. Each line should contain period, institutional_contract, retail_contract, institutional_spot, retail_spot values separated by spaces.</textarea>
+    <textarea id="inputData" rows="20" cols="50">15m 29.76 12.09 1.86 3.84
+30m 52.39 12.34 2.79 5.00
+1h 110.63 32.26 6.38 8.15
+4h 100.40 51.09 17.77 9.23
+8h 152.06 -20.26 26.90 7.62
+12h 143.55 -15.21 6.30 -0.75
+24h 528.16 90.27 4.85 4.65
+2d 255.37 -55.95 -27.74 -11.93
+3d 1240.00 652.40 81.74 10.43
+5d 1950.00 983.05 24.24 54.17
+7d -438.31 -478.31 -391.79 -164.78
+10d -1170.00 -828.45 -722.87 -232.79
+15d -2540.00 -1070.00 -1260.00 -308.81
+30d -6370.00 12440.00 -2290.00 -202.66
+60d -14470.00 44990.00 -2730.00 -195.51</textarea>
     <br><br>
     <button type="button" onclick="calculateTotals()">Calculate Totals</button>
 </form>
@@ -34,10 +48,23 @@ function calculateTotals() {
             spot_institutional.push(parseFloat(values[3]));
             spot_retail.push(parseFloat(values[4]));
         } else {
-            document.getElementById("output").innerText = "Error in line " + (i+1) + ": Each line must have five elements.";
+            document.getElementById("output").innerText = "Error in line " + (i+1) + ": Each line must have five elements. Found " + values.length + " elements.";
             return;
         }
     }
 
     // Calculating totals
-    var contract_totals = contract_institutional.map((c, i) =>
+    var contract_totals = contract_institutional.map((c, i) => c + contract_retail[i]);
+    var spot_totals = spot_institutional.map((s, i) => s + spot_retail[i]);
+    var overall_sum = contract_totals.reduce((a, b) => a + b, 0) + spot_totals.reduce((a, b) => a + b, 0);
+
+    // Displaying results
+    var resultText = "Contract Totals: " + contract_totals.join('m, ') + "m\n";
+    resultText += "Spot Totals: " + spot_totals.join('m, ') + "m\n";
+    resultText += "Overall Sum: " + overall_sum.toFixed(2) + " million USD";
+    document.getElementById("output").innerText = resultText;
+}
+</script>
+
+</body>
+</html>
