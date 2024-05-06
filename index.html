@@ -24,23 +24,26 @@
 
         for (let i = 2; i < lines.length; i++) {
           const parts = lines[i].split(':');
-          const period = parts[0].trim();
-          const match = parts[1].match(/(-?\d+(\.\d+)?)(m|b|k)/i);
+          if (parts.length === 2) {
+            const period = parts[0].trim();
+            const valueStr = parts[1].trim();
+            const match = valueStr.match(/(-?\d+(\.\d+)?)(m|b|k)/i);
 
-          if (match) {
-            let value = parseFloat(match[1]);
-            const unit = match[3].toLowerCase();
+            if (match) {
+              let value = parseFloat(match[1]);
+              const unit = match[3].toLowerCase();
 
-            if (unit === 'b') {
-              value *= 1000;
-            } else if (unit === 'k') {
-              value /= 1000;
+              if (unit === 'b') {
+                value *= 1000;
+              } else if (unit === 'k') {
+                value /= 1000;
+              }
+
+              if (!periodData[period]) {
+                periodData[period] = 0;
+              }
+              periodData[period] += value;
             }
-
-            if (!periodData[period]) {
-              periodData[period] = 0;
-            }
-            periodData[period] += value;
           }
         }
 
