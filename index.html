@@ -1,64 +1,51 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>数据提取和计算</title>
+<meta charset="UTF-8">
+<title>BTCUSDT Data Calculator</title>
 </head>
 <body>
-  <h1>请将数据粘贴到下面的文本框中:</h1>
-  <textarea id="data-input" rows="10" cols="50"></textarea>
-  <br>
-  <button onclick="calculateSum()">计算结果</button>
-  <br>
-  <h2>结果:</h2>
-  <p id="result"></p>
+<h2>BTCUSDT Data Calculator</h2>
+<form id="dataForm">
+    <h3>Enter Data for Calculation</h3>
+    <textarea id="inputData" rows="20" cols="50">Paste your data here in the specified format.</textarea>
+    <br><br>
+    <button type="button" onclick="calculateTotals()">Calculate Totals</button>
+</form>
 
-  <script>
-    function calculateSum() {
-      const data = document.getElementById('data-input').value;
-      const sections = data.split('\n\n');
-      const values = {};
+<h3>Results:</h3>
+<p id="output">Results will be displayed here after calculation.</p>
 
-      for (let section of sections) {
-        const lines = section.split('\n');
-        
-        // 第一步,提取数据
-        for (let i = 2; i < lines.length; i++) {
-          const parts = lines[i].split(':');
-          if (parts.length === 2) {
-            const period = parts[0].trim();
-            const valueStr = parts[1].trim();
-            const match = valueStr.match(/(-?\d+(\.\d+)?)(m|b|k)/i);
+<script>
+function calculateTotals() {
+    var inputData = document.getElementById("inputData").value;
+    var lines = inputData.split('\n');
+    var contract_institutional = [];
+    var contract_retail = [];
+    var spot_institutional = [];
+    var spot_retail = [];
 
-            if (match) {
-              let value = parseFloat(match[1]);
-              const unit = match[3].toLowerCase();
-
-              // 第二步,转换为同单位的数据
-              if (unit === 'b') {
-                value *= 1000;
-              } else if (unit === 'k') {
-                value /= 1000;
-              }
-
-              if (!values[period]) {
-                values[period] = [];
-              }
-              values[period].push(value);
-            }
-          }
-        }
-      }
-
-      let sum = 0;
-      for (let period in values) {
-        // 第三步,相同时间段的两个数据相加
-        const periodSum = values[period].reduce((a, b) => a + b, 0);
-        sum += periodSum;
-      }
-
-      // 第四步,把第三步得出的所有数据相加
-      document.getElementById('result').innerText = `总和为: ${sum.toFixed(2)} 百万美元`;
+    // Parsing the input data
+    for (var i = 1; i < lines.length; i++) { // starts from 1 to skip header
+        var values = lines[i].split(' ');
+        contract_institutional.push(parseFloat(values[1]));
+        contract_retail.push(parseFloat(values[2]));
+        spot_institutional.push(parseFloat(values[3]));
+        spot_retail.push(parseFloat(values[4]));
     }
-  </script>
+
+    // Calculating totals
+    var contract_totals = contract_institutional.map((c, i) => c + contract_retail[i]);
+    var spot_totals = spot_institutional.map((s, i) => s + spot_retail[i]);
+    var overall_sum = contract_totals.reduce((a, b) => a + b, 0) + spot_totals.reduce((a, b) => a + b, 0);
+
+    // Displaying results
+    var resultText = "Contract Totals: " + contract_totals.join('m, ') + "m\n";
+    resultText += "Spot Totals: " + spot_totals.join('m, ') + "m\n";
+    resultText += "Overall Sum: " + overall_sum.toFixed(2) + " million USD";
+    document.getElementById("output").innerText = resultText;
+}
+</script>
+
 </body>
 </html>
