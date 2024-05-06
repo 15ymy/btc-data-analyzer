@@ -16,20 +16,30 @@
     function calculateSum() {
       const data = document.getElementById('data-input').value;
       const lines = data.split('\n');
-      let sum = 0;
+      const values = {};
 
       for (let line of lines) {
-        const match = line.match(/(-?\d+(\.\d+)?)(m|b)/i);
+        const match = line.match(/(\d+[a-z]): (-?\d+(\.\d+)?)(m|b)/i);
         if (match) {
-          const value = parseFloat(match[1]);
-          const unit = match[3].toLowerCase();
-          
+          const period = match[1];
+          const value = parseFloat(match[2]);
+          const unit = match[4].toLowerCase();
+
+          if (!values[period]) {
+            values[period] = 0;
+          }
+
           if (unit === 'b') {
-            sum += value * 1000;
+            values[period] += value * 1000;
           } else {
-            sum += value;
+            values[period] += value;
           }
         }
+      }
+
+      let sum = 0;
+      for (let period in values) {
+        sum += values[period];
       }
 
       document.getElementById('result').innerText = `总和为: ${sum.toFixed(2)} 百万美元`;
