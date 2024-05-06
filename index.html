@@ -19,7 +19,7 @@
       const values = {};
 
       for (let line of lines) {
-        const match = line.match(/(\d+[a-z]): (-?\d+(\.\d+)?)(m|b|k)/i);
+        const match = line.match(/(\d+[a-z]):?\s+(-?\d+(\.\d+)?)(m|b|k)/i);
         if (match) {
           const period = match[1];
           let value = parseFloat(match[2]);
