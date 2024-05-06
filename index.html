@@ -8,7 +8,7 @@
 <h2>BTCUSDT Data Calculator</h2>
 <form id="dataForm">
     <h3>Enter Data for Calculation</h3>
-    <textarea id="inputData" rows="20" cols="50">Paste your data here in the specified format.</textarea>
+    <textarea id="inputData" rows="20" cols="50">Paste your data here. Each line should contain period, institutional_contract, retail_contract, institutional_spot, retail_spot values separated by spaces.</textarea>
     <br><br>
     <button type="button" onclick="calculateTotals()">Calculate Totals</button>
 </form>
@@ -26,26 +26,18 @@ function calculateTotals() {
     var spot_retail = [];
 
     // Parsing the input data
-    for (var i = 1; i < lines.length; i++) { // starts from 1 to skip header
-        var values = lines[i].split(' ');
-        contract_institutional.push(parseFloat(values[1]));
-        contract_retail.push(parseFloat(values[2]));
-        spot_institutional.push(parseFloat(values[3]));
-        spot_retail.push(parseFloat(values[4]));
+    for (var i = 0; i < lines.length; i++) {
+        var values = lines[i].trim().split(/\s+/); // Split by one or more whitespace characters
+        if (values.length === 5) {
+            contract_institutional.push(parseFloat(values[1]));
+            contract_retail.push(parseFloat(values[2]));
+            spot_institutional.push(parseFloat(values[3]));
+            spot_retail.push(parseFloat(values[4]));
+        } else {
+            document.getElementById("output").innerText = "Error in line " + (i+1) + ": Each line must have five elements.";
+            return;
+        }
     }
 
     // Calculating totals
-    var contract_totals = contract_institutional.map((c, i) => c + contract_retail[i]);
-    var spot_totals = spot_institutional.map((s, i) => s + spot_retail[i]);
-    var overall_sum = contract_totals.reduce((a, b) => a + b, 0) + spot_totals.reduce((a, b) => a + b, 0);
-
-    // Displaying results
-    var resultText = "Contract Totals: " + contract_totals.join('m, ') + "m\n";
-    resultText += "Spot Totals: " + spot_totals.join('m, ') + "m\n";
-    resultText += "Overall Sum: " + overall_sum.toFixed(2) + " million USD";
-    document.getElementById("output").innerText = resultText;
-}
-</script>
-
-</body>
-</html>
+    var contract_totals = contract_institutional.map((c, i) =>
