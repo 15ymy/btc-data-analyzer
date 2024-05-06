@@ -15,27 +15,30 @@
   <script>
     function calculateSum() {
       const data = document.getElementById('data-input').value;
-      const lines = data.split('\n');
+      const sections = data.split('\n\n');
       const values = {};
 
-      for (let line of lines) {
-        const match = line.match(/(\d+[a-z]):?\s+(-?\d+(\.\d+)?)(m|b|k)/i);
-        if (match) {
-          const period = match[1];
-          let value = parseFloat(match[2]);
-          const unit = match[4].toLowerCase();
+      for (let section of sections) {
+        const lines = section.split('\n');
+        for (let i = 2; i < lines.length; i++) {
+          const match = lines[i].match(/(\d+[a-z]):?\s+(-?\d+(\.\d+)?)(m|b|k)/i);
+          if (match) {
+            const period = match[1];
+            let value = parseFloat(match[2]);
+            const unit = match[4].toLowerCase();
 
-          if (!values[period]) {
-            values[period] = 0;
+            if (!values[period]) {
+              values[period] = 0;
+            }
+
+            if (unit === 'b') {
+              value *= 1000;
+            } else if (unit === 'k') {
+              value /= 1000;
+            }
+
+            values[period] += value;
           }
-
-          if (unit === 'b') {
-            value *= 1000;
-          } else if (unit === 'k') {
-            value /= 1000;
-          }
-
-          values[period] += value;
         }
       }
 
