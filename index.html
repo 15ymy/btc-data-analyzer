@@ -20,8 +20,8 @@
 
       for (let section of sections) {
         const lines = section.split('\n');
-        const periodData = {};
-
+        
+        // 第一步,提取数据
         for (let i = 2; i < lines.length; i++) {
           const parts = lines[i].split(':');
           if (parts.length === 2) {
@@ -33,37 +33,30 @@
               let value = parseFloat(match[1]);
               const unit = match[3].toLowerCase();
 
+              // 第二步,转换为同单位的数据
               if (unit === 'b') {
                 value *= 1000;
               } else if (unit === 'k') {
                 value /= 1000;
               }
 
-              if (!periodData[period]) {
-                periodData[period] = [0, 0];
+              if (!values[period]) {
+                values[period] = [];
               }
-              if (valueStr.startsWith('-')) {
-                periodData[period][1] += value;
-              } else {
-                periodData[period][0] += value;
-              }
+              values[period].push(value);
             }
           }
-        }
-
-        for (let period in periodData) {
-          if (!values[period]) {
-            values[period] = 0;
-          }
-          values[period] += periodData[period][0] - periodData[period][1];
         }
       }
 
       let sum = 0;
       for (let period in values) {
-        sum += values[period];
+        // 第三步,相同时间段的两个数据相加
+        const periodSum = values[period].reduce((a, b) => a + b, 0);
+        sum += periodSum;
       }
 
+      // 第四步,把第三步得出的所有数据相加
       document.getElementById('result').innerText = `总和为: ${sum.toFixed(2)} 百万美元`;
     }
   </script>
