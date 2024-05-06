@@ -20,16 +20,16 @@
 
       for (let section of sections) {
         const lines = section.split('\n');
-        for (let i = 2; i < lines.length; i++) {
-          const match = lines[i].match(/(\d+[a-z]):?\s+(-?\d+(\.\d+)?)(m|b|k)/i);
-          if (match) {
-            const period = match[1];
-            let value = parseFloat(match[2]);
-            const unit = match[4].toLowerCase();
+        const periodData = {};
 
-            if (!values[period]) {
-              values[period] = 0;
-            }
+        for (let i = 2; i < lines.length; i++) {
+          const parts = lines[i].split(':');
+          const period = parts[0].trim();
+          const match = parts[1].match(/(-?\d+(\.\d+)?)(m|b|k)/i);
+
+          if (match) {
+            let value = parseFloat(match[1]);
+            const unit = match[3].toLowerCase();
 
             if (unit === 'b') {
               value *= 1000;
@@ -37,8 +37,18 @@
               value /= 1000;
             }
 
-            values[period] += value;
+            if (!periodData[period]) {
+              periodData[period] = 0;
+            }
+            periodData[period] += value;
           }
+        }
+
+        for (let period in periodData) {
+          if (!values[period]) {
+            values[period] = 0;
+          }
+          values[period] += periodData[period];
         }
       }
 
