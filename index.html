@@ -1,157 +1,39 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>BTC Data Analyzer</title>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        textarea {
-            width: 100%;
-            margin-bottom: 10px;
-        }
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            max-width: 800px;
-            margin: auto;
-            font-family: monospace;
-            white-space: pre;
-        }
-        th, td {
-            padding: 4px;
-            text-align: left;
-        }
-        .positive {
-            color: green;
-        }
-        .negative {
-            color: red;
-        }
-    </style>
+  <title>数据提取和计算</title>
 </head>
 <body>
-    <h1>BTC Data Analyzer</h1>
-    <textarea id="original-data" rows="10" cols="100" placeholder="在此处粘贴原始数据"></textarea>
-    <br>
-    <textarea id="latest-data" rows="10" cols="100" placeholder="在此处粘贴最新数据"></textarea>
-    <br>
-    <button onclick="analyzeData()">Analyze Data</button>
-    <br><br>
-    <table id="dataTable">
-        <tbody></tbody>
-    </table>
+  <h1>请将数据粘贴到下面的文本框中:</h1>
+  <textarea id="data-input" rows="10" cols="50"></textarea>
+  <br>
+  <button onclick="calculateSum()">计算结果</button>
+  <br>
+  <h2>结果:</h2>
+  <p id="result"></p>
 
-    <script>
-        function analyzeData() {
-            const originalDataInput = document.getElementById('original-data').value;
-            const latestDataInput = document.getElementById('latest-data').value;
+  <script>
+    function calculateSum() {
+      const data = document.getElementById('data-input').value;
+      const lines = data.split('\n');
+      let sum = 0;
 
-            const originalContractData = processData(originalDataInput, '合约');
-            const latestContractData = processData(latestDataInput, '合约');
-            const originalSpotData = processData(originalDataInput, '现货');
-            const latestSpotData = processData(latestDataInput, '现货');
-
-            const labels = originalContractData.labels;
-            const institutionalContractData = calculateDifference(latestContractData.institutionalData, originalContractData.institutionalData);
-            const retailContractData = calculateDifference(latestContractData.retailData, originalContractData.retailData);
-            const institutionalSpotData = calculateDifference(latestSpotData.institutionalData, originalSpotData.institutionalData);
-            const retailSpotData = calculateDifference(latestSpotData.retailData, originalSpotData.retailData);
-
-            const tbody = document.querySelector('#dataTable tbody');
-            tbody.innerHTML = '';
-
-            const contractPriceDiff = latestContractData.price - originalContractData.price;
-            const contractPriceRow = document.createElement('tr');
-            contractPriceRow.innerHTML = `<td colspan="3">BTC合约价格: ${latestContractData.price.toFixed(2)}U (${formatNumber(contractPriceDiff)}U)</td>`;
-            tbody.appendChild(contractPriceRow);
-
-            const contractHeaderRow = document.createElement('tr');
-            contractHeaderRow.innerHTML = '<td>时段   机构资金差   散户资金差</td>';
-            tbody.appendChild(contractHeaderRow);
-
-            for (let i = 0; i < labels.length; i++) {
-                const row = document.createElement('tr');
-                const institutional = formatNumber(institutionalContractData[i]);
-                const retail = formatNumber(retailContractData[i]);
-                row.innerHTML = `<td>${labels[i].padEnd(6)} ${institutional.padStart(10)} ${retail.padStart(10)}</td>`;
-                tbody.appendChild(row);
-            }
-
-            const spotPriceDiff = latestSpotData.price - originalSpotData.price;
-            const spotPriceRow = document.createElement('tr');
-            spotPriceRow.innerHTML = `<td colspan="3">BTC现货价格: ${latestSpotData.price.toFixed(2)}U (${formatNumber(spotPriceDiff)}U)</td>`;
-            tbody.appendChild(spotPriceRow);
-
-            const spotHeaderRow = document.createElement('tr');
-            spotHeaderRow.innerHTML = '<td>时段   机构资金差   散户资金差</td>';
-            tbody.appendChild(spotHeaderRow);
-
-            for (let i = 0; i < labels.length; i++) {
-                const row = document.createElement('tr');
-                const institutional = formatNumber(institutionalSpotData[i]);
-                const retail = formatNumber(retailSpotData[i]);
-                row.innerHTML = `<td>${labels[i].padEnd(6)} ${institutional.padStart(10)} ${retail.padStart(10)}</td>`;
-                tbody.appendChild(row);
-            }
+      for (let line of lines) {
+        const match = line.match(/(-?\d+(\.\d+)?)(m|b)/i);
+        if (match) {
+          const value = parseFloat(match[1]);
+          const unit = match[3].toLowerCase();
+          
+          if (unit === 'b') {
+            sum += value * 1000;
+          } else {
+            sum += value;
+          }
         }
+      }
 
-        function processData(dataInput, type) {
-            const dataLines = dataInput.split('\n');
-            const labels = [];
-            const institutionalData = [];
-            const retailData = [];
-            let price = null;
-            let isTargetData = false;
-
-            for (let i = 0; i < dataLines.length; i++) {
-                const line = dataLines[i].trim();
-                if (line.includes(type)) {
-                    isTargetData = true;
-                } else if (line.includes('最近交易价格')) {
-                    price = parseFloat(line.match(/\((\d+(\.\d+)?)/)[1]);
-                } else if (line.includes('period') && isTargetData) {
-                    const dataPoints = dataLines.slice(i + 1);
-                    for (const point of dataPoints) {
-                        const [period, institutional, retail] = point.trim().split(/\s+/);
-                        if (period && institutional && retail) {
-                            labels.push(period);
-                            institutionalData.push(parseFloat(institutional));
-                            retailData.push(parseFloat(retail));
-                        }
-                    }
-                    break;
-                }
-            }
-
-            return { labels, institutionalData, retailData, price };
-        }
-
-        function calculateDifference(latestData, originalData) {
-            return latestData.map((value, index) => {
-                if (index < originalData.length) {
-                    return value - originalData[index];
-                } else {
-                    return value;
-                }
-            });
-        }
-
-        function formatNumber(number) {
-            if (isNaN(number)) {
-                return '-';
-            }
-            const absNumber = Math.abs(number);
-            const sign = number >= 0 ? '+' : '-';
-            if (absNumber >= 1e9) {
-                return sign + (absNumber / 1e9).toFixed(2) + 'b';
-            } else if (absNumber >= 1e6) {
-                return sign + (absNumber / 1e6).toFixed(2) + 'm';
-            } else if (absNumber >= 1e3) {
-                return sign + (absNumber / 1e3).toFixed(2) + 'k';
-            } else {
-                return sign + absNumber.toFixed(2);
-            }
-        }
-    </script>
+      document.getElementById('result').innerText = `总和为: ${sum.toFixed(2)} 百万美元`;
+    }
+  </script>
 </body>
 </html>
